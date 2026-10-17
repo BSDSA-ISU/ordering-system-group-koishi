@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Employees | Restaurant DW</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+</head>
+<body>
+<main class="container">
+    <header class="header">
+        <div>
+            <h1>Employee <span>Management</span></h1>
+            <p>Manage your restaurant's staff directory.</p>
+        </div>
+        <a href="{{ url_for('index') }}" style="color:var(--text)">
+            ← Back to Home
+        </a>
+    </header>
+
+    <section class="section">
+        <h3>Staff Directory</h3>
+        <p class="subtitle">Employee records from the restaurant database</p>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Employee</th>
+                        <th>Role</th>
+                        <th>Username</th>
+                        <th>Hire Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for employee in employees %}
+                    <tr>
+                        <td>{{ employee.staff_id }}</td>
+                        <td>{{ employee.first_name }} {{ employee.last_name }}</td>
+                        <td><span class="badge">{{ employee.role }}</span></td>
+                        <td>{{ employee.username or 'Not assigned' }}</td>
+                        <td>{{ employee.hire_date }}</td>
+                        <td>
+                            {% if employee.is_active %}
+                                <span style="color:var(--cyan)">Active</span>
+                            {% else %}
+                                <span style="color:var(--pink)">Inactive</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="empty-state">
+                            No employees found.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+</body>
+</html>

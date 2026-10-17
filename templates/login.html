@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sign in | Restaurant DW</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+    <style>
+        body { display: grid; place-items: center; padding: 20px; }
+        .login-card {
+            width: 100%; max-width: 410px; padding: 32px;
+            border: 1px solid var(--border); border-radius: 20px;
+            background: linear-gradient(145deg, #14213c, #0c1528);
+        }
+        .login-card h1 { margin-bottom: 4px; }
+        .login-card > p { color: var(--muted); margin-top: 0; }
+        label { display: block; margin: 18px 0 7px; }
+        input {
+            width: 100%; padding: 13px; color: var(--text);
+            background: #080f20; border: 1px solid var(--border);
+            border-radius: 9px; font: inherit;
+        }
+        input:focus { outline: 2px solid var(--purple); }
+        button {
+            width: 100%; margin-top: 24px; padding: 13px;
+            border: 0; border-radius: 9px;
+            background: linear-gradient(90deg, #7357ee, #4e8cff);
+            color: white; font: inherit; font-weight: 700;
+            cursor: pointer;
+        }
+        .error {
+            color: #ff9cae; background: #511b3033;
+            padding: 10px; border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+<main class="login-card">
+    <span class="badge">RESTAURANT DW</span>
+    <h1>Welcome back.</h1>
+    <p>Sign in with your employee account.</p>
+
+    {% for category, message in get_flashed_messages(with_categories=true) %}
+        <p class="error">{{ message }}</p>
+    {% endfor %}
+
+    <form method="post" action="{{ url_for('login') }}">
+        <label for="username">Username</label>
+        <input id="username" name="username"
+               autocomplete="username" required autofocus>
+
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password"
+               autocomplete="current-password" required>
+
+        <button type="submit">Sign in →</button>
+    </form>
+</main>
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Restaurant DW | Home</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+    <style>
+        .nav-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 20px;
+            margin-top: 28px;
+        }
+        .nav-card {
+            display: block;
+            padding: 25px;
+            color: var(--text);
+            text-decoration: none;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: linear-gradient(145deg, #14213c, #0c1528);
+            transition: transform .2s, border-color .2s;
+        }
+        .nav-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--purple);
+        }
+        .nav-card .symbol {
+            font-size: 28px;
+            margin-bottom: 12px;
+        }
+        .nav-card h2 { font-size: 18px; margin: 0 0 8px; }
+        .nav-card p { color: var(--muted); margin: 0; }
+        .welcome {
+            padding: 34px;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            background: linear-gradient(120deg, #222453, #102d48, #101a30);
+        }
+        .welcome h1 { font-size: clamp(28px, 4vw, 42px); margin: 0; }
+        .welcome p { color: #bdc9e4; }
+        .topbar {
+            display: flex; justify-content: space-between;
+            align-items: center; gap: 12px; margin-bottom: 24px;
+        }
+        .logout {
+            color: var(--text); border: 1px solid var(--border);
+            border-radius: 9px; padding: 10px 15px;
+            background: var(--panel); cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<main class="container">
+    <header class="topbar">
+        <strong>RESTAURANT <span style="color:var(--purple)">DW</span></strong>
+        <form action="{{ url_for('logout') }}" method="post">
+            <button class="logout" type="submit">Log out</button>
+        </form>
+    </header>
+
+    <section class="welcome">
+        <span class="badge">RESTAURANT MANAGEMENT SYSTEM</span>
+        <h1>Welcome back, {{ session.name }}.</h1>
+        <p>
+            Your restaurant, your data, your decisions.
+            Manage your team and explore business performance in one place.
+        </p>
+        <p>Signed in as <strong>{{ session.role }}</strong></p>
+    </section>
+
+    <div class="nav-grid">
+        <a class="nav-card" href="{{ url_for('dashboard') }}">
+            <div class="symbol">📊</div>
+            <h2>Analytics Dashboard</h2>
+            <p>Explore revenue, sales trends, and best-selling items.</p>
+        </a>
+
+        {% if session.role == 'Owner' %}
+        <a class="nav-card" href="{{ url_for('staff_list') }}">
+            <div class="symbol">👥</div>
+            <h2>Employee Management</h2>
+            <p>Manage staff accounts, employee details, and access.</p>
+        </a>
+        {% endif %}
+    </div>
+
+    <footer class="footer">
+        <span>Restaurant DW · MariaDB Analytics</span>
+        <span>Better data. Better decisions.</span>
+    </footer>
+</main>
+</body>
+</html>
