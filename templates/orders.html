@@ -1,0 +1,74 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Order Management | Restaurant DW</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+</head>
+<body>
+<main class="container">
+    <header class="header">
+        <div>
+            <h1>Order <span>Management</span></h1>
+            <p>View and manage restaurant orders.</p>
+        </div>
+        <a href="{{ url_for('index') }}">← Back Home</a>
+    </header>
+
+    {% for category, message in get_flashed_messages(with_categories=true) %}
+        <p class="subtitle">{{ message }}</p>
+    {% endfor %}
+
+    <section class="section">
+        <p>
+            <a href="{{ url_for('order_create') }}">+ Create Order</a>
+        </p>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Order #</th>
+                        <th>Customer ID</th>
+                        <th>Staff ID</th>
+                        <th>Items</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr>
+                        <td>{{ order.order_id }}</td>
+                        <td>{{ order.customer_id or 'Walk-in' }}</td>
+                        <td>{{ order.staff_id or 'Unassigned' }}</td>
+                        <td>{{ order.total_quantity }}</td>
+                        <td>{{ '%.2f'|format(order.total_amount) }}</td>
+                        <td><span class="badge">{{ order.order_status }}</span></td>
+                        <td>{{ order.created_at }}</td>
+                        <td>
+                            <a href="{{ url_for('order_edit', order_id=order.order_id) }}">Edit</a>
+                            <form method="post"
+                                  action="{{ url_for('order_delete', order_id=order.order_id) }}"
+                                  onsubmit="return confirm('Delete this order and its order details?');"
+                                  style="display:inline">
+                                <button type="submit">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="8" class="empty-state">No orders found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+</body>
+</html>

@@ -13,6 +13,7 @@
             <h1>Employee <span>Management</span></h1>
             <p>Manage your restaurant's staff directory.</p>
         </div>
+        <a href="{{ url_for('staff_create') }}">+ Add Employee</a>
         <a href="{{ url_for('index') }}" style="color:var(--text)">
             ← Back to Home
         </a>
@@ -32,8 +33,10 @@
                         <th>Username</th>
                         <th>Hire Date</th>
                         <th>Status</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
+                            
                 <tbody>
                     {% for employee in employees %}
                     <tr>
@@ -49,10 +52,22 @@
                                 <span style="color:var(--pink)">Inactive</span>
                             {% endif %}
                         </td>
+                        <td>
+                            <a href="{{ url_for('staff_edit', staff_id=employee.staff_id) }}">
+                                Edit
+                            </a>
+                        
+                            <form method="post"
+                                  action="{{ url_for('staff_delete', staff_id=employee.staff_id) }}"
+                                  onsubmit="return confirm('Delete this employee?');"
+                                  style="display:inline">
+                                <button type="submit">Delete</button>
+                            </form>
+                        </td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="6" class="empty-state">
+                        <td colspan="7" class="empty-state">
                             No employees found.
                         </td>
                     </tr>

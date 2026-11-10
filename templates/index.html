@@ -76,6 +76,7 @@
             <h2>Analytics Dashboard</h2>
             <p>Explore revenue, sales trends, and best-selling items.</p>
         </a>
+        
 
         {% if session.role == 'Owner' %}
         <a class="nav-card" href="{{ url_for('staff_list') }}">
@@ -84,12 +85,18 @@
             <p>Manage staff accounts, employee details, and access.</p>
         </a>
         {% endif %}
+        <a class="nav-card" href="{{ url_for('order_list') }}">
+            <div class="symbol">📦</div>
+            <h2>Order Management</h2>
+            <p>View orders, edit details, and manage order statuses.</p>
+        </a>
     </div>
 
     <footer class="footer">
         <span>Restaurant DW · MariaDB Analytics</span>
         <span>Better data. Better decisions.</span>
     </footer>
+    
 </main>
 </body>
 </html>

@@ -1,13 +1,18 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+
     <title>Restaurant DW | Analytics</title>
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='dashboard.css') }}">
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
 <div class="container">
 
@@ -16,44 +21,100 @@
             <h1>Restaurant <span>Analytics</span></h1>
             <p>Data Warehouse · Business Intelligence Dashboard</p>
         </div>
+
         <span class="badge">MariaDB · Live query</span>
+
+        <a href="{{ url_for('operational_dashboard') }}">
+            Operational Dashboard
+        </a>
+
+        <a href="{{ url_for('dashboard') }}">
+            Data Warehouse Dashboard
+        </a>
     </header>
 
+
+    <!-- KPI CARDS -->
     <div class="kpi-container">
+
         <section class="kpi-card">
             <h3>Total Revenue</h3>
-            <p>₱{{ "%.2f"|format((data.kpis.total_revenue or 0)|float) }}</p>
+            <p>
+                ₱{{ "%.2f"|format(
+                    (data.kpis.total_revenue or 0)|float
+                ) }}
+            </p>
             <p class="kpi-note">Revenue across recorded sales</p>
         </section>
 
         <section class="kpi-card">
-            <h3>Total Orders</h3>
+            <h3>Total Transactions</h3>
             <p>{{ data.kpis.total_orders or 0 }}</p>
             <p class="kpi-note">Distinct orders in the warehouse</p>
         </section>
+
+        <section class="kpi-card">
+            <h3>Average Order Value</h3>
+            <p>
+                ₱{{ "%.2f"|format(
+                    (data.kpis.average_order_value or 0)|float
+                ) }}
+            </p>
+            <p class="kpi-note">Average revenue per transaction</p>
+        </section>
+
     </div>
 
+
+    <!-- VISUALIZATIONS -->
     <div class="dashboard-grid">
 
+        <!-- LINE CHART -->
         <section class="section">
             <h3>Revenue Trend</h3>
-            <p class="subtitle">Daily revenue · Latest 7 recorded dates</p>
+            <p class="subtitle">
+                Daily revenue · Latest 7 recorded dates
+            </p>
+
             <div class="chart-wrap">
                 <canvas id="revenueChart"></canvas>
             </div>
         </section>
 
+
+        <!-- BAR CHART -->
         <section class="section">
-            <h3>Top Menu Items</h3>
-            <p class="subtitle">Ranked by total revenue</p>
+            <h3>Top 5 Best-Selling Items</h3>
+            <p class="subtitle">
+                Ranked by total quantity sold
+            </p>
+
             <div class="chart-wrap">
                 <canvas id="itemsChart"></canvas>
             </div>
         </section>
 
+
+        <!-- DONUT CHART -->
+        <section class="section">
+            <h3>Sales by Menu Category</h3>
+            <p class="subtitle">
+                Revenue distribution across menu categories
+            </p>
+
+            <div class="chart-wrap">
+                <canvas id="categoryChart"></canvas>
+            </div>
+        </section>
+
+
+        <!-- DATA TABLE -->
         <section class="section">
             <h3>Best-Selling Items</h3>
-            <p class="subtitle">Sales performance by menu item</p>
+            <p class="subtitle">
+                Quantity and revenue performance
+            </p>
+
             <div class="table-wrap">
                 <table>
                     <thead>
@@ -63,12 +124,17 @@
                         <th>Revenue</th>
                     </tr>
                     </thead>
+
                     <tbody>
                     {% for item in data.top_items %}
                     <tr>
                         <td>{{ item.item_name }}</td>
                         <td>{{ item.total_quantity_sold }}</td>
-                        <td>₱{{ "%.2f"|format(item.item_revenue|float) }}</td>
+                        <td>
+                            ₱{{ "%.2f"|format(
+                                item.item_revenue|float
+                            ) }}
+                        </td>
                     </tr>
                     {% else %}
                     <tr>
@@ -82,42 +148,58 @@
             </div>
         </section>
 
-        <section class="section">
-            <h3>Daily Revenue Breakdown</h3>
-            <p class="subtitle">Revenue per recorded date</p>
-            <div class="chart-wrap">
-                <canvas id="dailyChart"></canvas>
-            </div>
-        </section>
-
     </div>
 
+
     <footer class="footer">
-        <span>Restaurant DW · Data Science &amp; Business Intelligence</span>
-        <span>Powered by Flask + MariaDB + Chart.js</span>
+        <span>
+            Restaurant DW · Data Science &amp; Business Intelligence
+        </span>
+
+        <span>
+            Powered by Flask + MariaDB + Chart.js
+        </span>
     </footer>
+
 </div>
 
+
 <script>
+
     const sales = {{ data.recent_sales | tojson }};
     const items = {{ data.top_items | tojson }};
+    const categories = {{ data.category_breakdown | tojson }};
 
+    // Theme colors
     const purple = '#8b78ff';
     const cyan = '#27d6cb';
     const blue = '#4e8cff';
+    const pink = '#f16bb8';
+    const orange = '#f6ad55';
+
+    const palette = [
+        purple, cyan, blue, pink, orange,
+        '#a78bfa', '#34d399', '#fb7185'
+    ];
+
     const gridColor = 'rgba(145, 164, 197, 0.13)';
     const textColor = '#91a4c5';
 
     Chart.defaults.color = textColor;
     Chart.defaults.font.family = 'Inter, Segoe UI, sans-serif';
 
+    // Philippine Peso formatter
     const money = value =>
         '₱' + Number(value).toLocaleString('en-PH', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
         });
 
-    // Oldest to newest for a chronological line chart.
+
+    // ======================================
+    // 1. REVENUE TREND - LINE CHART
+    // ======================================
+
     const chronologicalSales = [...sales].reverse();
 
     const revenueLabels = chronologicalSales.map(s =>
@@ -129,123 +211,213 @@
     );
 
     new Chart(document.getElementById('revenueChart'), {
+
         type: 'line',
+
         data: {
             labels: revenueLabels,
+
             datasets: [{
-                label: 'Revenue',
+                label: 'Daily Revenue',
                 data: revenueValues,
+
                 borderColor: purple,
                 backgroundColor: 'rgba(139, 120, 255, 0.15)',
+
                 fill: true,
                 tension: 0.35,
                 borderWidth: 3,
+
                 pointRadius: 4,
                 pointHoverRadius: 7,
                 pointBackgroundColor: cyan
             }]
         },
+
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            interaction: { intersect: false, mode: 'index' },
+
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            },
+
             plugins: {
-                legend: { display: false },
+                legend: {
+                    display: false
+                },
+
                 tooltip: {
                     callbacks: {
-                        label: context => money(context.parsed.y)
+                        label: context =>
+                            money(context.parsed.y)
                     }
                 }
             },
+
             scales: {
                 x: {
-                    grid: { color: gridColor },
-                    ticks: { maxRotation: 35, maxTicksLimit: 7 }
+                    grid: {
+                        color: gridColor
+                    },
+
+                    ticks: {
+                        maxRotation: 35,
+                        maxTicksLimit: 7
+                    }
                 },
+
                 y: {
                     beginAtZero: true,
-                    grid: { color: gridColor },
-                    ticks: { callback: value => '₱' + value }
+
+                    grid: {
+                        color: gridColor
+                    },
+
+                    ticks: {
+                        callback: value => '₱' + value
+                    }
                 }
             }
         }
     });
 
+
+    // ======================================
+    // 2. TOP ITEMS - HORIZONTAL BAR CHART
+    // ======================================
+
     new Chart(document.getElementById('itemsChart'), {
+
         type: 'bar',
+
         data: {
             labels: items.map(item => item.item_name),
+
             datasets: [{
-                label: 'Revenue',
-                data: items.map(item => Number(item.item_revenue || 0)),
-                backgroundColor: [
-                    purple, blue, cyan, '#f16bb8', '#f6ad55'
-                ],
+                label: 'Quantity Sold',
+
+                data: items.map(item =>
+                    Number(item.total_quantity_sold || 0)
+                ),
+
+                backgroundColor: palette,
                 borderRadius: 6,
                 maxBarThickness: 35
             }]
         },
+
         options: {
             indexAxis: 'y',
+
             responsive: true,
             maintainAspectRatio: false,
+
             plugins: {
-                legend: { display: false },
+                legend: {
+                    display: false
+                },
+
                 tooltip: {
                     callbacks: {
-                        label: context => money(context.parsed.x)
+                        label: context =>
+                            context.parsed.x + ' items sold'
                     }
                 }
             },
+
             scales: {
                 x: {
                     beginAtZero: true,
-                    grid: { color: gridColor },
-                    ticks: { callback: value => '₱' + value }
+
+                    grid: {
+                        color: gridColor
+                    }
                 },
+
                 y: {
-                    grid: { display: false }
+                    grid: {
+                        display: false
+                    }
                 }
             }
         }
     });
 
-    new Chart(document.getElementById('dailyChart'), {
-        type: 'bar',
+
+    // ======================================
+    // 3. CATEGORY DISTRIBUTION - DONUT CHART
+    // ======================================
+
+    new Chart(document.getElementById('categoryChart'), {
+
+        type: 'doughnut',
+
         data: {
-            labels: revenueLabels,
+            labels: categories.map(category =>
+                category.category_name
+            ),
+
             datasets: [{
-                label: 'Daily Revenue',
-                data: revenueValues,
-                backgroundColor: blue,
-                hoverBackgroundColor: cyan,
-                borderRadius: 6,
-                maxBarThickness: 38
+                label: 'Category Revenue',
+
+                data: categories.map(category =>
+                    Number(category.category_revenue || 0)
+                ),
+
+                backgroundColor: categories.map((_, index) =>
+                    palette[index % palette.length]
+                ),
+
+                borderColor: '#151a2a',
+                borderWidth: 3,
+
+                hoverOffset: 10
             }]
         },
+
         options: {
             responsive: true,
             maintainAspectRatio: false,
+
+            cutout: '65%',
+
             plugins: {
-                legend: { display: false },
+                legend: {
+                    display: true,
+                    position: 'bottom',
+
+                    labels: {
+                        padding: 15,
+                        usePointStyle: true
+                    }
+                },
+
                 tooltip: {
                     callbacks: {
-                        label: context => money(context.parsed.y)
+                        label: context => {
+                            const values = context.dataset.data;
+                            const total = values.reduce(
+                                (sum, value) => sum + value, 0
+                            );
+
+                            const percentage = total > 0
+                                ? (context.parsed / total * 100)
+                                    .toFixed(1)
+                                : 0;
+
+                            return context.label + ': ' +
+                                money(context.parsed) +
+                                ' (' + percentage + '%)';
+                        }
                     }
-                }
-            },
-            scales: {
-                x: {
-                    grid: { display: false }
-                },
-                y: {
-                    beginAtZero: true,
-                    grid: { color: gridColor },
-                    ticks: { callback: value => '₱' + value }
                 }
             }
         }
     });
+
 </script>
+
 </body>
 </html>

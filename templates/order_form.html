@@ -1,0 +1,224 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ 'Edit' if order else 'Create' }} Order | Restaurant DW</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+</head>
+<body>
+<main class="container">
+    <header class="header">
+        <h1>{{ 'Edit' if order else 'Create' }} <span>Order</span></h1>
+        <a href="{{ url_for('order_list') }}">← Back to Orders</a>
+    </header>
+
+    {% for category, message in get_flashed_messages(with_categories=true) %}
+        <p class="subtitle">{{ message }}</p>
+    {% endfor %}
+
+    <section class="section">
+        <form method="post">
+
+    {% if order %}
+    <p>
+        <label>Customer</label><br>
+        <select name="customer_id">
+            <option value="">Walk-in / None</option>
+            {% for customer in customers %}
+            <option value="{{ customer.customer_id }}"
+                {% if order.customer_id == customer.customer_id %}selected{% endif %}>
+                {{ customer.first_name }} {{ customer.last_name }}
+                — {{ customer.email }}
+            </option>
+            {% endfor %}
+        </select>
+    </p>
+    {% else %}
+    <p>
+        <label>Customer Type</label><br>
+        <select name="customer_mode" id="customer_mode" required>
+            <option value="existing">Existing Customer</option>
+            <option value="new">Create New Customer</option>
+            <option value="walkin">Walk-in Customer</option>
+        </select>
+    </p>
+
+    <div id="existing_customer">
+        <label>Select Customer</label><br>
+        <select name="customer_id" id="customer_id">
+            <option value="">-- Select a customer --</option>
+            {% for customer in customers %}
+            <option value="{{ customer.customer_id }}">
+                {{ customer.first_name }} {{ customer.last_name }}
+                — {{ customer.email }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div id="new_customer" hidden>
+        <p>
+            <label>First Name</label><br>
+            <input type="text" name="new_first_name"
+                   maxlength="50" autocomplete="given-name">
+        </p>
+        <p>
+            <label>Last Name</label><br>
+            <input type="text" name="new_last_name"
+                   maxlength="50" autocomplete="family-name">
+        </p>
+        <p>
+            <label>Email</label><br>
+            <input type="email" name="new_email"
+                   maxlength="100" autocomplete="email">
+        </p>
+        <p>
+            <label>Phone Number (Optional)</label><br>
+            <input type="tel" name="new_phone_number"
+                   maxlength="20" autocomplete="tel">
+        </p>
+    </div>
+
+    <script>
+        const mode = document.getElementById("customer_mode");
+        const existing = document.getElementById("existing_customer");
+        const newCustomer = document.getElementById("new_customer");
+        const customerSelect = document.getElementById("customer_id");
+
+        function updateCustomerFields() {
+            const isNew = mode.value === "new";
+            const isExisting = mode.value === "existing";
+
+            existing.hidden = !isExisting;
+            newCustomer.hidden = !isNew;
+            customerSelect.required = isExisting;
+
+            newCustomer.querySelectorAll("input").forEach(input => {
+                input.required = isNew &&
+                    input.name !== "new_phone_number";
+            });
+        }
+
+        mode.addEventListener("change", updateCustomerFields);
+        updateCustomerFields();
+    </script>
+    {% endif %}
+
+            <p>
+                <label>Assigned staff</label><br>
+                <select name="staff_id">
+                    <option value="">Unassigned</option>
+                    {% for employee in employees %}
+                    <option value="{{ employee.staff_id }}"
+                        {% if order and order.staff_id == employee.staff_id %}selected{% endif %}>
+                        {{ employee.first_name }} {{ employee.last_name }}
+                        (#{{ employee.staff_id }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </p>
+
+
+            
+    <section class="section">
+        <h3>Order Items</h3>
+        <p class="subtitle">Select menu items and quantities. Prices and totals are calculated by the server.</p>
+    
+        <div id="order-items">
+            <div class="order-line" style="display:flex; gap:10px; margin-bottom:12px; flex-wrap:wrap;">
+                <select name="item_id[]" required>
+                    <option value="">Select menu item</option>
+                    {% for item in menu_items %}
+                    <option value="{{ item.item_id }}">
+                        {{ item.item_name }} — {{ "%.2f"|format(item.price) }}
+                        (Stock: {{ item.stock_level if item.stock_level is not none else 'Untracked' }})
+                    </option>
+                    {% endfor %}
+                </select>
+            
+                <input type="number" name="quantity[]" min="1" max="1000"
+                       value="1" required style="width:100px;">
+            
+                <button type="button" class="remove-item">Remove</button>
+            </div>
+        </div>
+    
+        <button type="button" id="add-item">+ Add Menu Item</button>
+    </section>
+    
+    <section class="section">
+        <h3>Payment (Optional)</h3>
+        <p class="subtitle">Leave the payment method unselected if the customer has not paid yet.</p>
+    
+        <p>
+            <label>Payment Method</label><br>
+            <select name="payment_method">
+                <option value="">No payment record yet</option>
+                <option value="Cash">Cash</option>
+                <option value="Credit Card">Credit Card</option>
+                <option value="Mobile Wallet">Mobile Wallet</option>
+            </select>
+        </p>
+    
+        <p>
+            <label>Payment Status</label><br>
+            <select name="payment_status">
+                <option value="Pending">Pending</option>
+                <option value="Paid">Paid</option>
+                <option value="Failed">Failed</option>
+            </select>
+        </p>
+    </section>
+    
+    <script>
+        const itemContainer = document.getElementById("order-items");
+    
+        document.getElementById("add-item").addEventListener("click", () => {
+            const first = itemContainer.querySelector(".order-line");
+            const line = first.cloneNode(true);
+        
+            line.querySelector("select").selectedIndex = 0;
+            line.querySelector("input").value = 1;
+        
+            itemContainer.appendChild(line);
+        });
+    
+        itemContainer.addEventListener("click", event => {
+            if (!event.target.classList.contains("remove-item")) return;
+        
+            const lines = itemContainer.querySelectorAll(".order-line");
+        
+            if (lines.length > 1) {
+                event.target.closest(".order-line").remove();
+            } else {
+                lines[0].querySelector("select").selectedIndex = 0;
+                lines[0].querySelector("input").value = 1;
+            }
+        });
+    </script>
+
+
+            {% if order %}
+            <p>
+                <label>Status</label><br>
+                <select name="order_status" required>
+                    {% for status in statuses %}
+                    <option value="{{ status }}"
+                        {% if order.order_status == status %}selected{% endif %}>
+                        {{ status }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </p>
+            {% endif %}
+
+            <button type="submit">
+                {{ 'Save Changes' if order else 'Create Order' }}
+            </button>
+        </form>
+    </section>
+</main>
+</body>
+</html>

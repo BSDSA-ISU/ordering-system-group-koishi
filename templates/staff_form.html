@@ -1,0 +1,73 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ 'Edit' if employee else 'Add' }} Employee | Restaurant DW</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+</head>
+<body>
+<main class="container">
+    <header class="header">
+        <h1>{{ 'Edit' if employee else 'Add' }} <span>Employee</span></h1>
+        <a href="{{ url_for('staff_list') }}">← Back to Staff</a>
+    </header>
+
+    {% for category, message in get_flashed_messages(with_categories=true) %}
+        <p class="subtitle">{{ message }}</p>
+    {% endfor %}
+
+    <section class="section">
+        <form method="post">
+            <p>
+                <label>First name</label><br>
+                <input name="first_name" required
+                       value="{{ employee.first_name if employee else '' }}">
+            </p>
+            <p>
+                <label>Last name</label><br>
+                <input name="last_name" required
+                       value="{{ employee.last_name if employee else '' }}">
+            </p>
+            <p>
+                <label>Username</label><br>
+                <input name="username" required autocomplete="username"
+                       value="{{ employee.username if employee else '' }}">
+            </p>
+            <p>
+                <label>Password {{ '(leave blank to keep current)' if employee else '' }}</label><br>
+                <input type="password" name="password"
+                       autocomplete="{{ 'new-password' if employee else 'new-password' }}"
+                       {% if not employee %}required{% endif %}>
+            </p>
+            <p>
+                <label>Role</label><br>
+                <select name="role" required>
+                    {% for role in ['Cashier', 'Waiter', 'Chef', 'Manager', 'Owner'] %}
+                    <option value="{{ role }}"
+                        {% if employee and employee.role == role %}selected{% endif %}>
+                        {{ role }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </p>
+
+            {% if employee %}
+            <p>
+                <label>Account status</label><br>
+                <select name="is_active">
+                    <option value="1" {% if employee.is_active %}selected{% endif %}>Active</option>
+                    <option value="0" {% if not employee.is_active %}selected{% endif %}>Inactive</option>
+                </select>
+            </p>
+            {% endif %}
+
+            <button type="submit">
+                {{ 'Save Changes' if employee else 'Create Employee' }}
+            </button>
+        </form>
+    </section>
+</main>
+</body>
+</html>

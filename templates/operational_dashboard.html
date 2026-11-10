@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Restaurant Operational | Dashboard</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<div class="container">
+
+    <header class="header">
+        <div>
+            <h1>Operational <span>Dashboard</span></h1>
+            <p>Real-Time Operations · Live Transaction Monitoring</p>
+        </div>
+        <span class="badge">Live Operational DB</span>
+
+        <a href="{{ url_for('operational_dashboard') }}">
+            Operational Dashboard
+        </a>
+        
+        <a href="{{ url_for('dashboard') }}">
+            Data Warehouse Dashboard
+        </a>
+    </header>
+
+    <!-- Key Operational KPIs -->
+    <div class="kpi-container">
+        <section class="kpi-card">
+            <h3>Completed Revenue</h3>
+            <p>₱{{ "%.2f"|format((revenue_stats.total_revenue or 0)|float) }}</p>
+            <p class="kpi-note">{{ revenue_stats.completed_orders or 0 }} completed orders</p>
+        </section>
+
+        <section class="kpi-card">
+            <h3>Active Orders</h3>
+            <p>{{ (order_stats.pending_orders or 0) + (order_stats.preparing_orders or 0) + (order_stats.ready_orders or 0) }}</p>
+            <p class="kpi-note">{{ order_stats.pending_orders or 0 }} Pending · {{ order_stats.preparing_orders or 0 }} Preparing · {{ order_stats.ready_orders or 0 }} Ready</p>
+        </section>
+
+        <section class="kpi-card">
+            <h3>Payments Collected</h3>
+            <p>₱{{ "%.2f"|format((payment_stats.total_paid or 0)|float) }}</p>
+            <p class="kpi-note">{{ payment_stats.pending_payments or 0 }} pending · {{ payment_stats.failed_payments or 0 }} failed</p>
+        </section>
+
+        <section class="kpi-card">
+            <h3>Menu Availability</h3>
+            <p>{{ menu_stats.available_items or 0 }} / {{ menu_stats.total_items or 0 }}</p>
+            <p class="kpi-note">{{ menu_stats.low_stock_items or 0 }} items low in stock (≤ 5)</p>
+        </section>
+    </div>
+
+    <!-- Main Dashboard Grid -->
+    <div class="dashboard-grid">
+
+        <!-- 7-Day Revenue Trend Chart -->
+        <section class="section">
+            <h3>7-Day Completed Revenue Trend</h3>
+            <p class="subtitle">Daily performance for the past week</p>
+            <div class="chart-wrap">
+                <canvas id="dailyRevenueChart"></canvas>
+            </div>
+        </section>
+
+        <!-- Order Status Breakdown Chart -->
+        <section class="section">
+            <h3>Order Status Breakdown</h3>
+            <p class="subtitle">Distribution across active & completed states</p>
+            <div class="chart-wrap">
+                <canvas id="statusChart"></canvas>
+            </div>
+        </section>
+
+        <!-- Top Selling Menu Items Table -->
+        <section class="section">
+            <h3>Top 5 Menu Items</h3>
+            <p class="subtitle">Ranked by volume sold (Completed Orders)</p>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Menu Item</th>
+                        <th>Qty Sold</th>
+                        <th>Total Revenue</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for item in top_items %}
+                    <tr>
+                        <td>{{ item.item_name }}</td>
+                        <td>{{ item.quantity_sold }}</td>
+                        <td>₱{{ "%.2f"|format(item.revenue|float) }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="3" class="empty-state">No sales recorded yet.</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Live / Recent Orders Table -->
+        <section class="section">
+            <h3>Recent Orders</h3>
+            <p class="subtitle">Latest 10 orders placed in the system</p>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Customer</th>
+                        <th>Staff</th>
+                        <th>Status</th>
+                        <th>Total Amount</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for order in recent_orders %}
+                    <tr>
+                        <td>#{{ order.order_id }}</td>
+                        <td>{{ order.customer_name }}</td>
+                        <td>{{ order.staff_name }}</td>
+                        <td>
+                            <span class="status-tag status-{{ order.order_status|lower }}">
+                                {{ order.order_status }}
+                            </span>
+                        </td>
+                        <td>₱{{ "%.2f"|format(order.total_amount|float) }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="empty-state">No recent orders found.</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </div>
+
+    <footer class="footer">
+        <span>Restaurant Operations · Real-Time Dashboard</span>
+        <span>Powered by Flask + MariaDB + Chart.js</span>
+    </footer>
+</div>
+
+<script>
+    // Data injected from Python Flask context
+    const dailyRevenueData = {{ daily_revenue | tojson }};
+    const statusData = {{ status_breakdown | tojson }};
+
+    // Color Palette matching DW Dashboard
+    const purple = '#8b78ff';
+    const cyan = '#27d6cb';
+    const blue = '#4e8cff';
+    const orange = '#f6ad55';
+    const pink = '#f16bb8';
+    const red = '#ff6b6b';
+    const gridColor = 'rgba(145, 164, 197, 0.13)';
+    const textColor = '#91a4c5';
+
+    Chart.defaults.color = textColor;
+    Chart.defaults.font.family = 'Inter, Segoe UI, sans-serif';
+
+    const money = value =>
+        '₱' + Number(value).toLocaleString('en-PH', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+
+    // 1. Daily Revenue Chart (Line)
+    const revLabels = dailyRevenueData.map(d => {
+        const dateObj = new Date(d.sale_date);
+        return isNaN(dateObj) ? String(d.sale_date).slice(0, 10) : dateObj.toISOString().slice(0, 10);
+    });
+    const revValues = dailyRevenueData.map(d => Number(d.daily_revenue || 0));
+
+    new Chart(document.getElementById('dailyRevenueChart'), {
+        type: 'line',
+        data: {
+            labels: revLabels,
+            datasets: [{
+                label: 'Revenue',
+                data: revValues,
+                borderColor: cyan,
+                backgroundColor: 'rgba(39, 214, 203, 0.15)',
+                fill: true,
+                tension: 0.35,
+                borderWidth: 3,
+                pointRadius: 4,
+                pointHoverRadius: 7,
+                pointBackgroundColor: purple
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { intersect: false, mode: 'index' },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: context => money(context.parsed.y)
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { color: gridColor },
+                    ticks: { maxRotation: 35, maxTicksLimit: 7 }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: { color: gridColor },
+                    ticks: { callback: value => '₱' + value }
+                }
+            }
+        }
+    });
+
+    // 2. Order Status Breakdown Chart (Bar)
+    const statusLabels = statusData.map(s => s.order_status);
+    const statusCounts = statusData.map(s => Number(s.order_count || 0));
+
+    // Status color mapping for visually distinct bars
+    const statusColors = statusLabels.map(status => {
+        switch (status) {
+            case 'Pending': return orange;
+            case 'Preparing': return blue;
+            case 'Ready': return purple;
+            case 'Completed': return cyan;
+            case 'Cancelled': return red;
+            default: return textColor;
+        }
+    });
+
+    new Chart(document.getElementById('statusChart'), {
+        type: 'bar',
+        data: {
+            labels: statusLabels,
+            datasets: [{
+                label: 'Orders',
+                data: statusCounts,
+                backgroundColor: statusColors,
+                borderRadius: 6,
+                maxBarThickness: 40
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: context => `${context.parsed.y} Orders`
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { display: false }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: { color: gridColor },
+                    ticks: { precision: 0 }
+                }
+            }
+        }
+    });
+</script>
+</body>
+</html>
