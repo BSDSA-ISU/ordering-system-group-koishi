@@ -3,9 +3,9 @@
 > *"Even if your subconscious can't decide what to eat, Koishi's ordering system is here to take your order without a single thought!"* 👁️✨
 
 <p align="center">
-  <img src="https://media1.tenor.com/m/gc4ws16CrTYAAAAC/reimu-touhou.gif" width="150" alt="Touhou" />
+  <img src="https://media1.tenor.com/m/kgP9_IlSgr0AAAAd/koishi-koishikomeiji.gif" width="150" alt="Touhou" />
   &nbsp;&nbsp;&nbsp;&nbsp;
-  <img src="https://media1.tenor.com/images/3f8205f142e0787e974e64ea9bc5949d/tenor.gif" width="150" alt="Koishi Komeiji" />
+  <img src="https://media1.tenor.com/m/mWflnc-0I4QAAAAC/fumo-fumo-fumo.gif" width="150" alt="Koishi Komeiji" />
 </p>
 
 ![koihsi](https://media1.tenor.com/m/h9Yv5T0wS7AAAAAC/koishi-komeiji-touhou.gif)
