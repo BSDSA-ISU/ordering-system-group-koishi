@@ -8,7 +8,7 @@
   <img src="https://media1.tenor.com/m/mWflnc-0I4QAAAAC/fumo-fumo-fumo.gif" width="150" alt="Koishi Komeiji" />
 </p>
 
-![koihsi](https://media1.tenor.com/m/h9Yv5T0wS7AAAAAC/koishi-komeiji-touhou.gif)
+![koihsi](https://media1.tenor.com/m/8dTfDJ7eHaEAAAAd/koishi-mmd.gif)
 
 ---
 
